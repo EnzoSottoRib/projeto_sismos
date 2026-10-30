@@ -24,28 +24,40 @@ import pandas as pd
 # --------------------------------------------------------------------------- #
 # CONFIGURAÇÃO
 # --------------------------------------------------------------------------- #
+
+PASTA_PROJETO = Path(__file__).resolve().parent
+PASTA_DADOS = PASTA_PROJETO / "dados"
+PASTA_SAIDA = PASTA_PROJETO / "saida"
+
 CFG = dict(
-    usgs="usgs_1990_2023_m55.csv",
-    noaa="noaa_earthquakes.tsv",
-    wb_gdp="API_NY.GDP.PCAP.CD_DS2_en_csv_v2_1529.csv",
-    wb_dens="API_EN.POP.DNST_DS2_en_csv_v2_7671.csv",
-    wb_meta="Metadata_Country_API_NY.GDP.PCAP.CD_DS2_en_csv_v2_1529.csv",  # vem dentro do zip do BM
-    countries_shp="ne_50m_admin_0_countries.zip",
+    usgs=str(PASTA_DADOS / "usgs_1990_2023_m55.csv"),
+    noaa=str(PASTA_DADOS / "noaa_earthquakes.tsv"),
+
+    wb_gdp=str(PASTA_DADOS / "API_NY.GDP.PCAP.CD_DS2_en_csv_v2_1529.csv"),
+
+    wb_dens=str(PASTA_DADOS / "API_EN.POP.DNST_DS2_en_csv_v2_7671.csv"),
+
+    wb_meta=str(PASTA_DADOS / "Metadata_Country_API_NY.GDP.PCAP.CD_DS2_en_csv_v2_1529.csv"),
+
+    countries_shp=str(PASTA_DADOS / "ne_50m_admin_0_countries.zip"),
+
+    wb_extra=str(PASTA_DADOS / "covariaveis_extra.csv"),
+
     y0=1990,
     y1=2023,
-    min_mag=5.5,              # universo de eventos (USGS)
-    max_offshore_km=250,      # epicentro no mar: atribui ao país mais próximo até esta distância
-    match_km=200,             # tolerância espacial USGS <-> NOAA
-    match_dmag=1.0,           # tolerância de magnitude USGS <-> NOAA
-    max_gap_borda=12,         # anos de ffill/bfill nas pontas das séries do BM (Afeganistão só tem PIB desde 2002)
-    janela_covar=5,           # país: média de PIB/densidade nos últimos N anos
-    mag_pais=6.0,             # corte de magnitude para Prob_Anual_Sismo_M6
-    decl_dias=30,             # declustering: janela de tempo APÓS o evento maior (precursores ficam como eventos próprios)
-    decl_km=100,              # declustering: raio MÍNIMO (cresce com a magnitude, ver declusterizar)
-    vulcao_excluir=[("1991-06-15", "PHL")],   # (data, iso3) de eventos cujas mortes vêm de ERUPÇÃO (Pinatubo)
-    wb_extra="covariaveis_extra.csv",   # opcional: PIB/densidade de países ausentes no BM (ex.: Taiwan)
+    min_mag=5.5,
+    max_offshore_km=250,
+    match_km=200,
+    match_dmag=1.0,
+    max_gap_borda=12,
+    janela_covar=5,
+    mag_pais=6.0,
+    decl_dias=30,
+    decl_km=100,
+    vulcao_excluir=[("1991-06-15", "PHL")]
 )
-OUT = Path("saida")
+
+OUT = PASTA_SAIDA
 
 # NOAA: códigos de descrição (usados quando o número de mortes está em branco)
 DESC_RANGE = {0: (0, 0), 1: (1, 50), 2: (51, 100), 3: (101, 1000), 4: (1001, np.inf)}
@@ -295,7 +307,9 @@ def adicionar_extra(wb):
     """Acrescenta países ausentes no BM (ex.: Taiwan) a partir de CSV manual. Colunas: iso3, ano,
     pib_pc, dens_pop (+ opcionais pais, regiao, grupo_renda). Anos em branco são interpolados."""
     caminho = Path(CFG["wb_extra"])
+
     if not caminho.exists():
+        modelo = PASTA_DADOS / "covariaveis_extra_MODELO.csv"
         modelo = Path("covariaveis_extra_MODELO.csv")
         if not modelo.exists():
             pd.DataFrame({
@@ -463,7 +477,7 @@ def validar(ev):
 
 
 def main():
-    OUT.mkdir(exist_ok=True)
+    OUT.mkdir(parents=True, exist_ok=True)
     usgs = declusterizar(geocodificar(load_usgs()))
     noaa_m = match_noaa_usgs(load_noaa(), usgs)
     relatorio_match(noaa_m)
@@ -502,6 +516,8 @@ def main():
           f"Alta_Mortalidade=1: {int(mod.alta_mortalidade.fillna(0).sum())} "
           f"({mod.alta_mortalidade.fillna(0).mean():.1%}) | log_mortes==0: {(mod.log_mortes == 0).mean():.0%}")
     print(f"  countries_cluster.csv: {len(clu)} países")
+
+    return ev, paises, mod, clu
 
 
 if __name__ == "__main__":
