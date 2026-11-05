@@ -47,6 +47,11 @@ CFG = dict(
 )
 OUT = Path("saida")
 
+# arquivos de entrada ficam em dados/ (permite rodar da raiz do projeto)
+DATA = Path("dados")
+for _k in ("usgs", "noaa", "wb_gdp", "wb_dens", "wb_meta", "countries_shp", "wb_extra"):
+    CFG[_k] = str(DATA / CFG[_k])
+
 # NOAA: códigos de descrição (usados quando o número de mortes está em branco)
 DESC_RANGE = {0: (0, 0), 1: (1, 50), 2: (51, 100), 3: (101, 1000), 4: (1001, np.inf)}
 
@@ -503,6 +508,8 @@ def main():
           f"({mod.alta_mortalidade.fillna(0).mean():.1%}) | log_mortes==0: {(mod.log_mortes == 0).mean():.0%}")
     print(f"  countries_cluster.csv: {len(clu)} países")
 
+
+    return ev, paises, mod, clu   # events, countries, events_modelo, countries_cluster
 
 if __name__ == "__main__":
     main()

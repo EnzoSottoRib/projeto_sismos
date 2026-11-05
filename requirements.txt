@@ -1,0 +1,18 @@
+# Projeto Sismos — dependências
+# Testado com Python 3.12 (o notebook foi salvo com 3.12.10). Recomendado: Python 3.10+
+#
+# Instalar com:  pip install -r requirements.txt
+
+# --- wrangling_sismos.py ---
+pandas>=2.0
+numpy>=1.26
+geopandas>=1.0      # lê o shapefile do Natural Earth (usa pyogrio por padrão)
+pyogrio>=0.7        # backend de leitura do geopandas
+shapely>=2.0        # nearest_points (países mais próximos p/ epicentros no mar)
+pyproj>=3.6         # reprojeção (to_crs), instalado junto com o geopandas
+
+# --- Analise_Sismos.ipynb ---
+matplotlib>=3.8
+scikit-learn>=1.3   # KMeans, PCA, silhouette, clustering hierárquico (traz o scipy junto)
+jupyterlab>=4.0     # para abrir o .ipynb localmente (ou use o Colab / VS Code)
+ipykernel>=6.0
